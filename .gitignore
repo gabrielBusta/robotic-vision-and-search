@@ -1,0 +1,39 @@
+#################  
+## Code::Blocks  
+#################  
+
+*.depend  
+*.layout  
+
+############  
+## Windows  
+############  
+
+# Windows image file caches  
+Thumbs.db  
+
+# Folder config file  
+Desktop.ini
+
+# ignore image and video files
+#################  
+## Code::Blocks  
+#################  
+
+*.depend  
+*.layout  
+
+############  
+## Windows  
+############  
+
+# Windows image file caches  
+Thumbs.db  
+
+# Folder config file  
+Desktop.ini
+
+/object-tracking/bin/Debug/*
+/object-tracking/obj/Debug/*
+
+.DS_Store
