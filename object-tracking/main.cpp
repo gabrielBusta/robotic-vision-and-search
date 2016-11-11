@@ -1,7 +1,6 @@
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/videoio/videoio.hpp>
-#include <iostream>
+#include <opencv2/opencv.hpp>
 #include <stdio.h>
+#include <vector>
 
 int main(int argc, char* argv[], char* envp[])
 {
@@ -12,20 +11,23 @@ int main(int argc, char* argv[], char* envp[])
         return EXIT_FAILURE;
     }
 
-    cv::Mat frame; char outfile[200]; int n = 1;
+    std::string window_name = "walk";
+    cv::namedWindow(window_name, cv::WINDOW_KEEPRATIO);
 
-    capture >> frame;
-    if (frame.empty())
-    {
-        std::cout << "ERROR: EMPTY VIDEO FILE." << std::endl;
-    }
+    cv::Mat frame, bw_frame;
+    std::vector<cv::Mat> frames;
 
-    while (!frame.empty())
+    while (true)
     {
-        sprintf(outfile, "frame-%d.jpg", n);
-        n += 1;
-        imwrite(outfile, frame);
         capture >> frame;
+        if (frame.empty())
+        {
+            break;
+        }
+        frames.push_back(frame);
+        cvtColor(frame, bw_frame, cv::COLOR_BGR2GRAY);
+        cv::imshow(window_name, bw_frame);
+        cv::waitKey(30);
     }
 
     return EXIT_SUCCESS;
