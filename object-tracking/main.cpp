@@ -29,8 +29,10 @@ int main(int argc, char* argv[], char* envp[])
         frames.push_back(frame);
         cvtColor(frame, bw_frame, cv::COLOR_BGR2GRAY);
         cv::imshow(window_name, bw_frame);
-        /* wait 30 milliseconds before loading the next
-           frame. This displays ~24 frames per second */
+        /*
+        wait 30 milliseconds before loading the next
+        frame. This displays ~24 frames per second
+        */
         cv::waitKey(30);
     }
 
