@@ -14,7 +14,7 @@ int main(int argc, char* argv[], char* envp[])
         return EXIT_FAILURE;
     }
 
-    std::string window_name = "walk";
+    std::string window_name = "Walkers";
     /* create a resizable window */
     cv::namedWindow(window_name, cv::WINDOW_KEEPRATIO);
 
