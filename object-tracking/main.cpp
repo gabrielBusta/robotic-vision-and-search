@@ -12,9 +12,11 @@ int main(int argc, char* argv[], char* envp[])
     }
 
     std::string window_name = "walk";
+    /* create a resizable window */
     cv::namedWindow(window_name, cv::WINDOW_KEEPRATIO);
 
     cv::Mat frame, bw_frame;
+    /* http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#meanstddev */
     std::vector<cv::Mat> frames;
 
     while (true)
@@ -27,6 +29,8 @@ int main(int argc, char* argv[], char* envp[])
         frames.push_back(frame);
         cvtColor(frame, bw_frame, cv::COLOR_BGR2GRAY);
         cv::imshow(window_name, bw_frame);
+        /* wait 30 milliseconds before loading the next
+           frame. This displays ~24 frames per second */
         cv::waitKey(30);
     }
 
