@@ -21,7 +21,8 @@ Desktop.ini
 #################  
 
 *.depend  
-*.layout  
+*.layout
+*.cbp
 
 ############  
 ## Windows  
