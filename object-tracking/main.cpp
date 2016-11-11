@@ -1,9 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <stdio.h>
 #include <iostream>
-#include <vector>
 
 int main(int argc, char* argv[], char* envp[])
 {
@@ -14,12 +12,14 @@ int main(int argc, char* argv[], char* envp[])
         return EXIT_FAILURE;
     }
 
-    std::string window_name = "Walkers";
     /* create a resizable window */
+    std::string window_name = "Walkers";
     cv::namedWindow(window_name, cv::WINDOW_KEEPRATIO);
 
-    cv::Mat frame, hsv_frame, mean, stddev;
-    std::vector<cv::Mat> frames;
+    /* http://docs.opencv.org/2.4.10/modules/core/doc/basic_structures.html#mat */
+    cv::Mat frame, hsv_frame;
+    /* http://docs.opencv.org/2.4.10/modules/core/doc/basic_structures.html#scalar */
+    cv::Scalar mean, stddev;
 
     while (true)
     {
@@ -28,7 +28,8 @@ int main(int argc, char* argv[], char* envp[])
         {
             break;
         }
-        frames.push_back(frame);
+
+        /* http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html#cvtcolor */
         cvtColor(frame, hsv_frame, cv::COLOR_BGR2HSV);
 
         /* http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#meanstddev */
