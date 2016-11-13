@@ -6,9 +6,19 @@
 #include <iostream>
 #include <vector>
 
-std::vector<cv::Rect> detectPedestrians(cv::Mat frame, cv::HOGDescriptor HOG)
+std::vector<cv::Rect> detectPedestrians(cv::Mat frame)
 {
+    /*
+    create a histograms of oriented gradients. Then, set it up to detect
+    objects using the trained people detecting support vector machine.
+    */
+    cv::HOGDescriptor HOG;
+    HOG.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
     std::vector<cv::Rect> pedestrians;
+
+    HOG.detectMultiScale(frame, pedestrians, 0, cv::Size(4, 4),
+                         cv::Size(8, 8), 1.05);
+
     return pedestrians;
 }
 
@@ -28,28 +38,18 @@ int main(int argc, char* argv[], char* envp[])
     }
 
     std::string windowName = "Pedestrian Detection";
-    /* create a resizable window. */
-    cv::namedWindow(windowName, cv::WINDOW_KEEPRATIO);
 
-    /*
-    create a histograms of oriented gradients. Then, set it up to detect
-    objects using the trained people detecting support vector machine.
-    */
-    cv::HOGDescriptor HOG;
-    HOG.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+    /* create a resizable window. */
+    // cv::namedWindow(windowName, cv::WINDOW_KEEPRATIO);
 
     cv::Mat frame;
-    std::vector<cv::Rect> pedestrians;
-
     while (capture.read(frame))
     {
         if (frame.empty())
         {
             break;
         }
-
-        pedestrians = detectPedestrians(frame, HOG);
-
+        std::vector<cv::Rect> pedestrians = detectPedestrians(frame);
         cv::imshow(windowName, drawRects(frame, pedestrians));
         /*
         wait 30 milliseconds before loading and displaying
