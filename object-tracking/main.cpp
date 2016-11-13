@@ -1,11 +1,23 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
 #include <iostream>
+#include <vector>
+
+std::string windowName = "Pedestrian Detection";
+cv::HOGDescriptor HOG;
+
+std::vector<cv::Rect> detect(cv::Mat frame)
+{
+    std::vector<cv::Rect> people;
+    return people;
+}
 
 int main(int argc, char* argv[], char* envp[])
 {
-    cv::VideoCapture capture("Walk1.mpg");
+    cv::VideoCapture capture("Walk.mpg");
     if (!capture.isOpened())
     {
         std::cout << "ERROR: FAILED TO OPEN THE INPUT FILE." << std::endl;
@@ -13,33 +25,28 @@ int main(int argc, char* argv[], char* envp[])
     }
 
     /* create a resizable window */
-    std::string window_name = "Walkers";
-    cv::namedWindow(window_name, cv::WINDOW_KEEPRATIO);
+    cv::namedWindow(windowName, cv::WINDOW_KEEPRATIO);
 
-    /* http://docs.opencv.org/2.4.10/modules/core/doc/basic_structures.html#mat */
-    cv::Mat frame, hsv_frame;
-    /* http://docs.opencv.org/2.4.10/modules/core/doc/basic_structures.html#scalar */
-    cv::Scalar mean, stddev;
+    /*
+    set the histograms of oriented gradients to detect objects
+    using the trained people detecting SVM
+    */
+    HOG.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
 
-    while (true)
+    cv::Mat frame;
+
+    while (capture.read(frame))
     {
-        capture >> frame;
         if (frame.empty())
         {
             break;
         }
 
-        /* http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html#cvtcolor */
-        cvtColor(frame, hsv_frame, cv::COLOR_BGR2HSV);
-
-        /* http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#meanstddev */
-        cv::meanStdDev(hsv_frame, mean, stddev);
-
-        cv::imshow(window_name, hsv_frame);
+        cv::imshow(windowName, frame);
         /*
-         wait 30 milliseconds before loading the next
-         frame. This displays ~24 frames per second
-         */
+        wait 30 milliseconds before loading and displaying
+        the next frame. This displays ~24 frames per second
+        */
         cv::waitKey(30);
     }
 
