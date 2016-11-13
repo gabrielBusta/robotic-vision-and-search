@@ -20,7 +20,7 @@ vector<Rect> detectPedestrians(Mat frame)
     vector<Rect> pedestrians;
 
 //    HOG.detectMultiScale(frame, pedestrians, 0, Size(4, 4),
-//                         cv::Size(32, 32), 1.05, 2);
+//                         Size(32, 32), 1.05, 2);
 
     return pedestrians;
 }
@@ -43,7 +43,7 @@ int main(int argc, char* argv[], char* envp[])
     string windowName = "Pedestrian Detection";
 
     /* create a resizable window. */
-    namedWindow(windowName, cv::WINDOW_KEEPRATIO);
+    namedWindow(windowName, WINDOW_KEEPRATIO);
 
     Mat frame;
     while (capture.read(frame))
