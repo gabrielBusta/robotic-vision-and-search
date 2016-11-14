@@ -9,57 +9,64 @@
 using namespace cv;
 using namespace std;
 
-vector<Rect> detectPedestrians(Mat frame)
-{
-    /*
-    create a histograms of oriented gradients. Then, set it up to detect
-    objects using the trained people detecting support vector machine.
-    */
-    HOGDescriptor HOG;
-    HOG.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-    vector<Rect> pedestrians;
-
-//    HOG.detectMultiScale(frame, pedestrians, 0, Size(4, 4),
-//                         Size(32, 32), 1.05, 2);
-
-    return pedestrians;
-}
-
-Mat drawRects(Mat frame, vector<Rect> pedestrians)
-{
-    Mat doctoredFrame = frame.clone();
-    return doctoredFrame;
-}
-
-int main(int argc, char* argv[], char* envp[])
+int main(int argc, char* argv[])
 {
     VideoCapture capture("Walk.mpg");
     if (!capture.isOpened())
     {
-        cout << "ERROR: FAILED TO OPEN THE INPUT FILE." << endl;
+        cout << "ERROR: FAILED TO OPEN THE VIDEO FILE." << endl;
+        return EXIT_FAILURE;
+    }
+
+    CascadeClassifier cascade("haarcascade_fullbody.xml");
+    if (cascade.empty())
+    {
+        cout << "ERROR: FAILED TO LOAD THE CASCADE FILE." << endl;
         return EXIT_FAILURE;
     }
 
     string windowName = "Pedestrian Detection";
+    namedWindow(windowName);
+    Mat frame, nextFrame;
 
-    /* create a resizable window. */
-    namedWindow(windowName, WINDOW_KEEPRATIO);
-
-    Mat frame;
-    while (capture.read(frame))
+    while (capture.get(CV_CAP_PROP_POS_FRAMES) <
+           capture.get(CV_CAP_PROP_FRAME_COUNT) - 1)
     {
+        capture.read(frame);
         if (frame.empty())
         {
             break;
         }
 
-        vector<Rect> pedestrians = detectPedestrians(frame);
+        Mat grayFrame;
 
-        imshow(windowName, drawRects(frame, pedestrians));
-        /*
-        wait 30 milliseconds before loading and displaying
-        the next frame. This displays ~24 frames per second.
-        */
+        cvtColor(frame, grayFrame, CV_BGR2GRAY);
+
+        capture.read(nextFrame);
+
+        Mat grayNextFrame;
+        cvtColor(nextFrame, grayNextFrame, CV_BGR2GRAY);
+
+        Mat difference;
+        absdiff(grayFrame, grayNextFrame, difference);
+
+        Mat thresholdFrame;
+        threshold(difference, thresholdFrame, 40, 255, THRESH_TOZERO);
+
+        vector<Rect> pedestrians;
+        cascade.detectMultiScale(difference, pedestrians, 1.1, 2, 0,
+                                 Size(30, 30), Size(150, 150));
+
+        for(size_t i = 0; i < pedestrians.size(); i++)
+        {
+            Point center(pedestrians[i].x + pedestrians[i].width * 0.5,
+                         pedestrians[i].y + pedestrians[i].height * 0.5);
+            ellipse(difference, center,
+                    Size(pedestrians[i].width * 0.5, pedestrians[i].height * 0.5),
+                    0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
+        }
+
+        imshow("Pedestrian Detection", difference);
         waitKey(30);
     }
 
