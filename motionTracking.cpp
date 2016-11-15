@@ -24,7 +24,7 @@ using namespace std;
 using namespace cv;
 
 //our sensitivity value to be used in the threshold() function
-const static int SENSITIVITY_VALUE = 36;
+const static int SENSITIVITY_VALUE = 50;
 //size of blur used to smooth the image to remove possible noise and
 //increase the size of the object we are trying to track. (Much like dilate and erode)
 const static int BLUR_SIZE = 10;
@@ -57,6 +57,9 @@ void searchForMovement(Mat thresholdImage, Mat &cameraFeed){
 	//find contours of filtered image using openCV findContours function
 	//findContours(temp,contours,hierarchy,CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE );// retrieves all contours
 	findContours(temp,contours,hierarchy,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_SIMPLE );// retrieves external contours
+    
+    
+    
 
 	//if contours vector is not empty, we have found some objects
 	if(contours.size()>0)objectDetected=true;
@@ -65,6 +68,7 @@ void searchForMovement(Mat thresholdImage, Mat &cameraFeed){
 	if(objectDetected){
 		//the largest contour is found at the end of the contours vector
 		//we will simply assume that the biggest contour is the object we are looking for.
+        
 		vector< vector<Point> > largestContourVec;
 		largestContourVec.push_back(contours.at(contours.size()-1));
 		//make a bounding rectangle around the largest contour then find its centroid
@@ -80,12 +84,14 @@ void searchForMovement(Mat thresholdImage, Mat &cameraFeed){
 	int x = theObject[0];
 	int y = theObject[1];
 	//draw some crosshairs on the object
-	circle(cameraFeed,Point(x,y),20,Scalar(0,255,0),2);
-	line(cameraFeed,Point(x,y),Point(x,y-25),Scalar(0,255,0),2);
-	line(cameraFeed,Point(x,y),Point(x,y+25),Scalar(0,255,0),2);
-	line(cameraFeed,Point(x,y),Point(x-25,y),Scalar(0,255,0),2);
-	line(cameraFeed,Point(x,y),Point(x+25,y),Scalar(0,255,0),2);
-	putText(cameraFeed,"Tracking object at (" + intToString(x)+","+intToString(y)+")",Point(x,y),1,1,Scalar(255,0,0),2);
+    //drawContours(cameraFeed, contours, -1, Scalar(0,0,255));
+    rectangle(cameraFeed, Point(x - 25,y - 50), Point(x + 25 ,y + 50), Scalar(0,255,0));
+    //circle(cameraFeed,Point(x,y),20,Scalar(0,255,0),2);
+	//line(cameraFeed,Point(x,y),Point(x,y-25),Scalar(0,255,0),2);
+	//line(cameraFeed,Point(x,y),Point(x,y+25),Scalar(0,255,0),2);
+	//line(cameraFeed,Point(x,y),Point(x-25,y),Scalar(0,255,0),2);
+	//line(cameraFeed,Point(x,y),Point(x+25,y),Scalar(0,255,0),2);
+	//putText(cameraFeed,"Tracking object at (" + intToString(x)+","+intToString(y)+")",Point(x,y),1,1,Scalar(255,0,0),2);
 
 
 
@@ -93,7 +99,7 @@ void searchForMovement(Mat thresholdImage, Mat &cameraFeed){
 int main(){
 
 	//some boolean variables for added functionality
-	//bool objectDetected = false;
+	bool objectDetected = false;
 	//these two can be toggled by pressing 'd' or 't'
 	bool debugMode = false;
 	bool trackingEnabled = false;
@@ -115,7 +121,7 @@ int main(){
 
 		//we can loop the video by re-opening the capture every time the video reaches its last frame
 
-		capture.open("/Users/danle/Desktop/Robotics/robotic-vision-and-search/object-tracking/Walk1.mpg");
+		capture.open("/Users/danle/Desktop/Robotics/Sample/OpenCVExamples/Walk1.mpg");
 
 		if(!capture.isOpened()){
 			cout <<"ERROR ACQUIRING VIDEO FEED\n";
@@ -130,6 +136,10 @@ int main(){
 
 			//read first frame
 			capture.read(frame1);
+            
+            if (frame1.empty()) {
+                break;
+            }
 			//convert frame1 to gray scale for frame differencing
             cv::cvtColor(frame1,grayImage1,COLOR_BGR2GRAY);
 
@@ -179,9 +189,9 @@ int main(){
 
     /// ---------- NEED TRACKING METHOD FOR HUMAN BODY
 			//if tracking enabled, search for contours in our thresholded image
-//            if(trackingEnabled) {
-//                searchForMovement(thresholdImage, frame1);
-//            }
+            if(trackingEnabled) {
+                searchForMovement(thresholdImage, frame1);
+            }
 
 			//show our captured frame
 			imshow("Frame1",frame1);
