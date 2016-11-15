@@ -24,6 +24,10 @@ Desktop.ini
 *.layout
 *.cbp
 
+# VREP
+*.dll
+*.dylib
+
 ############  
 ## Windows  
 ############  
