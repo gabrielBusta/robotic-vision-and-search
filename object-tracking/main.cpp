@@ -1,86 +1,200 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/core/types.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/videoio.hpp"
+#include <opencv2/highgui.hpp>
+#include <opencv2/video.hpp>
 #include <iostream>
-#include <vector>
 
-using namespace cv;
 using namespace std;
+using namespace cv;
 
-static void detectAndDraw(const HOGDescriptor &hog, Mat &img)
+const static int SENSITIVITY_VALUE = 50;
+const static int BLUR_SIZE = 10;
+Rect objectBoundingRectangle = Rect(0, 0, 0, 0);
+Point object = Point(0, 0);
+
+
+/*
+notice how we use the '&' operator for the cameraFeed. This is because
+we wish to take the values passed into the function and manipulate them,
+rather than just working with a copy. eg. we draw to the cameraFeed in
+this function which is then displayed in the main() function.
+*/
+void searchForMovement(Mat thresholdImage, Mat &frame)
 {
-    vector<Rect> found, found_filtered;
-    // Run the detector with default parameters. to get a higher hit-rate
-    // (and more false alarms, respectively), decrease the hitThreshold and
-    // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
-    hog.detectMultiScale(img, found, 0, Size(8,8), Size(32,32), 1.05, 2);
+    // these two vectors needed for output of findContours
+    vector< vector<Point> > contours;
+    vector<Vec4i> hierarchy;
 
-    for(size_t i = 0; i < found.size(); i++)
+    // find contours of filtered image using openCV findContours function
+    findContours(thresholdImage, contours, hierarchy,
+                 CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+    if (!contours.empty())
     {
-        Rect r = found[i];
-        size_t j;
-        // Do not add small detections inside a bigger detection.
-        for ( j = 0; j < found.size(); j++)
-        {
-            if (j != i && (r & found[j]) == r)
-            {
-                break;
-            }
-        }
-        if ( j == found.size() )
-        {
-            found_filtered.push_back(r);
-        }
+        /*
+        the largest contour is found at the end of
+        the contours vector we will simply assume that the
+        biggest contour is the object we are looking for.
+        */
+        vector<Point> largestContour;
+        largestContour = contours.at(contours.size() - 1);
+
+        /*
+        make a bounding rectangle around the largest contour then
+        find its centroid this will be the object's final estimated position.
+        */
+        objectBoundingRectangle = boundingRect(largestContour);
+
+        // update the objects position
+        object.x = objectBoundingRectangle.x +
+                   objectBoundingRectangle.width / 2;
+
+        object.y = objectBoundingRectangle.y +
+                   objectBoundingRectangle.height / 2;
     }
 
-    for (size_t i = 0; i < found_filtered.size(); i++)
-    {
-        Rect r = found_filtered[i];
-
-        // The HOG detector returns slightly larger rectangles than the real objects,
-        // so we slightly shrink the rectangles to get a nicer output.
-        r.x += cvRound(r.width*0.1);
-        r.width = cvRound(r.width*0.8);
-        r.y += cvRound(r.height*0.07);
-        r.height = cvRound(r.height*0.8);
-        rectangle(img, r.tl(), r.br(), cv::Scalar(0,255,0), 3);
-    }
+    // draw a green rectangle around the detected object
+    rectangle(frame, Point(object.x - 25, object.y - 50),
+              Point(object.x + 25, object.y + 50), Scalar(0, 255, 0));
 }
 
 int main(int argc, char* argv[])
 {
+    //these two can be toggled by pressing 'd' or 't'
+    bool debugMode = false;
+    bool trackingEnabled = false;
+    //pause and resume code
+    bool pause = false;
+    //set up the matrices that we will need
+    //the two frames we will be comparing
+    Mat frame, nextFrame;
+    //their grayscale images (needed for absdiff() function)
+    Mat frameGray, nextFrameGray;
+    // resulting difference image
+    Mat difference;
+    // thresholded difference image (for use in findContours() function)
+    Mat threshold;
+
     VideoCapture capture("Walk.mpg");
-    if (!capture.isOpened())
+    if(!capture.isOpened())
     {
-        cout << "ERROR: FAILED TO OPEN THE VIDEO FILE." << endl;
+        cout << "ERROR: FAILED TO OPEN THE INPUT FILE." << endl;
         return EXIT_FAILURE;
     }
 
-    HOGDescriptor hog;
-    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-
-    string windowName = "Pedestrian Detection";
-    namedWindow(windowName);
-    Mat frame;
-
-    while (capture.read(frame))
+    //check if the video has reach its last frame.
+    //we add '-1' because we are reading two frames from the video at a time.
+    //if this is not included, we get a memory error!
+    while(capture.get(CV_CAP_PROP_POS_FRAMES) <
+          capture.get(CV_CAP_PROP_FRAME_COUNT) - 1)
     {
+        capture.read(frame);
         if (frame.empty())
         {
             break;
         }
 
-        Mat grayFrame;
+        //convert frame to gray scale for frame differencing
+        cv::cvtColor(frame, frameGray, COLOR_BGR2GRAY);
 
-        cvtColor(frame, grayFrame, CV_BGR2GRAY);
+        //copy second frame
+        capture.read(nextFrame);
 
-        detectAndDraw(hog, grayFrame);
+        //convert nextFrame to gray scale for frame differencing
+        cv::cvtColor(nextFrame,nextFrameGray,COLOR_BGR2GRAY);
 
-        imshow("Pedestrian Detection", grayFrame);
-        waitKey(30);
+        //perform frame differencing with the sequential images. This will output an "intensity image"
+        //do not confuse this with a threshold image, we will need to perform thresholding afterwards.
+        cv::absdiff(frameGray,nextFrameGray,difference);
+
+        //threshold intensity image at a given sensitivity value
+        cv::threshold(difference, threshold, SENSITIVITY_VALUE, 255, THRESH_BINARY);
+
+        if(debugMode==true)
+        {
+            //show the difference image and threshold image
+            cv::imshow("Difference Image", difference);
+            cv::imshow("Threshold Image", threshold);
+        }
+        else
+        {
+            //if not in debug mode, destroy the windows so we don't see them anymore
+            cv::destroyWindow("Difference Image");
+            cv::destroyWindow("Threshold Image");
+
+        }
+        //use blur() to smooth the image, remove possible noise and
+        //increase the size of the object we are trying to track. (Much like dilate and erode)
+        cv::blur(threshold, threshold, cv::Size(BLUR_SIZE,BLUR_SIZE));
+
+        //threshold again to obtain binary image from blur output
+        cv::threshold(threshold,threshold,SENSITIVITY_VALUE,255,THRESH_BINARY);
+
+
+        if(debugMode==true)
+        {
+            //show the threshold image after it's been "blurred"
+            imshow("Final Threshold Image", threshold);
+
+        }
+        else
+        {
+            //if not in debug mode, destroy the windows so we don't see them anymore
+            cv::destroyWindow("Final Threshold Image");
+
+        }
+
+        /// ---------- NEED TRACKING METHOD FOR HUMAN BODY
+        //if tracking enabled, search for contours in our thresholded image
+        if(trackingEnabled)
+        {
+            searchForMovement(threshold, frame);
+        }
+
+        //show our captured frame
+        imshow("frame",frame);
+        //check to see if a button has been pressed.
+        //this 10ms delay is necessary for proper operation of this program
+        //if removed, frames will not have enough time to referesh and a blank
+        //image will appear.
+        switch(waitKey(50))
+        {
+
+        case 27: //'esc' key has been pressed, exit program.
+            return 0;
+        case 116: //'t' has been pressed. this will toggle tracking
+            trackingEnabled = !trackingEnabled;
+            if (trackingEnabled == false) cout<<"Tracking disabled."<<endl;
+            else
+                cout <<"Tracking enabled."<<endl;
+            break;
+        case 100: //'d' has been pressed. this will debug mode
+            debugMode = !debugMode;
+            if(debugMode == false) cout<<"Debug mode disabled."<<endl;
+            else
+                cout <<"Debug mode enabled."<<endl;
+            break;
+        case 112: //'p' has been pressed. this will pause/resume the code.
+            pause = !pause;
+            if(pause == true)
+            {
+                cout<<"Code paused, press 'p' again to resume"<<endl;
+                while (pause == true)
+                {
+                    //stay in this loop until
+                    switch (waitKey())
+                    {
+                    //a switch statement inside a switch statement? Mind blown.
+                    case 112:
+                        //change pause back to false
+                        pause = false;
+                        cout<<"Code resumed."<<endl;
+                        break;
+                    }
+                }
+            }
+        }
     }
-
-    return EXIT_SUCCESS;
+    return 0;
 }
