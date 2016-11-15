@@ -9,6 +9,46 @@
 using namespace cv;
 using namespace std;
 
+static void detectAndDraw(const HOGDescriptor &hog, Mat &img)
+{
+    vector<Rect> found, found_filtered;
+    // Run the detector with default parameters. to get a higher hit-rate
+    // (and more false alarms, respectively), decrease the hitThreshold and
+    // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
+    hog.detectMultiScale(img, found, 0, Size(8,8), Size(32,32), 1.05, 2);
+
+    for(size_t i = 0; i < found.size(); i++)
+    {
+        Rect r = found[i];
+        size_t j;
+        // Do not add small detections inside a bigger detection.
+        for ( j = 0; j < found.size(); j++)
+        {
+            if (j != i && (r & found[j]) == r)
+            {
+                break;
+            }
+        }
+        if ( j == found.size() )
+        {
+            found_filtered.push_back(r);
+        }
+    }
+
+    for (size_t i = 0; i < found_filtered.size(); i++)
+    {
+        Rect r = found_filtered[i];
+
+        // The HOG detector returns slightly larger rectangles than the real objects,
+        // so we slightly shrink the rectangles to get a nicer output.
+        r.x += cvRound(r.width*0.1);
+        r.width = cvRound(r.width*0.8);
+        r.y += cvRound(r.height*0.07);
+        r.height = cvRound(r.height*0.8);
+        rectangle(img, r.tl(), r.br(), cv::Scalar(0,255,0), 3);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     VideoCapture capture("Walk.mpg");
@@ -18,21 +58,15 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    CascadeClassifier cascade("haarcascade_fullbody.xml");
-    if (cascade.empty())
-    {
-        cout << "ERROR: FAILED TO LOAD THE CASCADE FILE." << endl;
-        return EXIT_FAILURE;
-    }
+    HOGDescriptor hog;
+    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
 
     string windowName = "Pedestrian Detection";
     namedWindow(windowName);
-    Mat frame, nextFrame;
+    Mat frame;
 
-    while (capture.get(CV_CAP_PROP_POS_FRAMES) <
-           capture.get(CV_CAP_PROP_FRAME_COUNT) - 1)
+    while (capture.read(frame))
     {
-        capture.read(frame);
         if (frame.empty())
         {
             break;
@@ -42,31 +76,9 @@ int main(int argc, char* argv[])
 
         cvtColor(frame, grayFrame, CV_BGR2GRAY);
 
-        capture.read(nextFrame);
+        detectAndDraw(hog, grayFrame);
 
-        Mat grayNextFrame;
-        cvtColor(nextFrame, grayNextFrame, CV_BGR2GRAY);
-
-        Mat difference;
-        absdiff(grayFrame, grayNextFrame, difference);
-
-        Mat thresholdFrame;
-        threshold(difference, thresholdFrame, 40, 255, THRESH_TOZERO);
-
-        vector<Rect> pedestrians;
-        cascade.detectMultiScale(difference, pedestrians, 1.1, 2, 0,
-                                 Size(30, 30), Size(150, 150));
-
-        for(size_t i = 0; i < pedestrians.size(); i++)
-        {
-            Point center(pedestrians[i].x + pedestrians[i].width * 0.5,
-                         pedestrians[i].y + pedestrians[i].height * 0.5);
-            ellipse(difference, center,
-                    Size(pedestrians[i].width * 0.5, pedestrians[i].height * 0.5),
-                    0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
-        }
-
-        imshow("Pedestrian Detection", difference);
+        imshow("Pedestrian Detection", grayFrame);
         waitKey(30);
     }
 
