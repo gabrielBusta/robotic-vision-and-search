@@ -13,12 +13,6 @@ const static int BLUR_SIZE = 10;
 Rect objectBoundingRectangle = Rect(0, 0, 0, 0);
 Point object = Point(0, 0);
 
-/*
-notice how we use the '&' operator for the cameraFeed. This is because
-we wish to take the values passed into the function and manipulate them,
-rather than just working with a copy. eg. we draw to the cameraFeed in
-this function which is then displayed in the main() function.
-*/
 void searchForMovement(Mat frameThreshold, Mat &frame)
 {
     // these two vectors needed for output of findContours
@@ -31,16 +25,12 @@ void searchForMovement(Mat frameThreshold, Mat &frame)
 
     if (!contours.empty())
     {
-        /*
-        the largest contour is found at the end of
-        the contours vector we will simply assume that the
-        biggest contour is the object we are looking for.
-        */
+        // the largest contour is found at the end of the contours vector.
         vector<Point> largestContour;
         largestContour = contours.at(contours.size() - 1);
 
         /*
-        make a bounding rectangle around the largest contour then
+        make a bounding rectangle around the largest contour, then
         find its centroid this will be the object's final estimated position.
         */
         objectBoundingRectangle = boundingRect(largestContour);
@@ -112,5 +102,6 @@ int main(int argc, char* argv[])
 
         waitKey(60);
     }
+
     return EXIT_SUCCESS;
 }
