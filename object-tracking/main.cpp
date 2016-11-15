@@ -71,11 +71,12 @@ int main(int argc, char* argv[])
     Mat frame, nextFrame;
     //their grayscale images (needed for absdiff() function)
     Mat frameGray, nextFrameGray;
-    // resulting difference image
-    Mat difference;
-    // thresholded difference image (for use in findContours() function)
-    Mat threshold;
+    //resulting difference image
+    Mat frameDifference;
+    //thresholded difference image (for use in findContours() function)
+    Mat frameThreshold;
 
+    //video capture object.
     VideoCapture capture("Walk.mpg");
     if(!capture.isOpened())
     {
@@ -106,16 +107,16 @@ int main(int argc, char* argv[])
 
         //perform frame differencing with the sequential images. This will output an "intensity image"
         //do not confuse this with a threshold image, we will need to perform thresholding afterwards.
-        cv::absdiff(frameGray,nextFrameGray,difference);
+        cv::absdiff(frameGray,nextFrameGray,frameDifference);
 
         //threshold intensity image at a given sensitivity value
-        cv::threshold(difference, threshold, SENSITIVITY_VALUE, 255, THRESH_BINARY);
+        cv::threshold(frameDifference, frameThreshold, SENSITIVITY_VALUE, 255, THRESH_BINARY);
 
         if(debugMode==true)
         {
             //show the difference image and threshold image
-            cv::imshow("Difference Image", difference);
-            cv::imshow("Threshold Image", threshold);
+            cv::imshow("Difference Image", frameDifference);
+            cv::imshow("Threshold Image", frameThreshold);
         }
         else
         {
@@ -126,16 +127,16 @@ int main(int argc, char* argv[])
         }
         //use blur() to smooth the image, remove possible noise and
         //increase the size of the object we are trying to track. (Much like dilate and erode)
-        cv::blur(threshold, threshold, cv::Size(BLUR_SIZE,BLUR_SIZE));
+        cv::blur(frameThreshold, frameThreshold, cv::Size(BLUR_SIZE,BLUR_SIZE));
 
         //threshold again to obtain binary image from blur output
-        cv::threshold(threshold,threshold,SENSITIVITY_VALUE,255,THRESH_BINARY);
+        cv::threshold(frameThreshold,frameThreshold,SENSITIVITY_VALUE,255,THRESH_BINARY);
 
 
         if(debugMode==true)
         {
             //show the threshold image after it's been "blurred"
-            imshow("Final Threshold Image", threshold);
+            imshow("Final Threshold Image", frameThreshold);
 
         }
         else
@@ -149,7 +150,7 @@ int main(int argc, char* argv[])
         //if tracking enabled, search for contours in our thresholded image
         if(trackingEnabled)
         {
-            searchForMovement(threshold, frame);
+            searchForMovement(frameThreshold, frame);
         }
 
         //show our captured frame
