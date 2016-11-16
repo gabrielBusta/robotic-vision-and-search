@@ -8,10 +8,8 @@
 using namespace std;
 using namespace cv;
 
-void findObject(Mat, Mat &);
-void drawObjectBoundingRectangle(Mat);
-
-Point object = Point(0, 0);
+void findObject(Mat, Mat &, Point &);
+void drawObjectBoundingRectangle(Mat, Point);
 
 int main(int argc, char* argv[])
 {
@@ -37,15 +35,19 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    const static int MIN_THRESH = 50, BLUR_SIZE = 10, MAX_VAL = 255;
-    Mat frame, nextFrame,
-        frameGray, nextFrameGray,
-        frameDifference,
-        frameThreshold;
+    Point objectPosition = Point(0, 0);
+    int frameCount = capture.get(CV_CAP_PROP_FRAME_COUNT);
 
-    while(capture.get(CV_CAP_PROP_POS_FRAMES) <
-          capture.get(CV_CAP_PROP_FRAME_COUNT) - 1)
+    while(capture.get(CV_CAP_PROP_POS_FRAMES) < frameCount - 1)
     {
+        const int MIN_THRESH = 50, MAX_VAL = 255;
+        const Size BLUR_SIZE = Size(10, 10);
+
+        Mat frame, nextFrame,
+            frameGray, nextFrameGray,
+            frameDifference,
+            frameThreshold;
+
         capture.read(frame);
 
         if (frame.empty())
@@ -60,7 +62,6 @@ int main(int argc, char* argv[])
             break;
         }
 
-        /* turn the color frames into gray scale images */
         cvtColor(frame, frameGray, COLOR_BGR2GRAY);
         cvtColor(nextFrame, nextFrameGray, COLOR_BGR2GRAY);
 
@@ -73,15 +74,15 @@ int main(int argc, char* argv[])
         use blur() to smooth the image, remove possible noise and
         increase the size of the object we are trying to track.
         */
-        blur(frameThreshold, frameThreshold, Size(BLUR_SIZE,BLUR_SIZE));
+        blur(frameThreshold, frameThreshold, BLUR_SIZE);
 
         threshold(frameThreshold, frameThreshold,
                   MIN_THRESH, MAX_VAL, THRESH_BINARY);
 
-        findObject(frameThreshold, frame);
+        findObject(frameThreshold, frame, objectPosition);
 
-        drawObjectBoundingRectangle(frame);
-        drawObjectBoundingRectangle(nextFrame);
+        drawObjectBoundingRectangle(frame, objectPosition);
+        drawObjectBoundingRectangle(nextFrame, objectPosition);
 
         writer.write(frame);
         writer.write(nextFrame);
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
-void findObject(Mat frameThreshold, Mat &frame)
+void findObject(Mat frameThreshold, Mat &frame, Point &objectPosition)
 {
     vector< vector<Point> > contours;
     vector<Vec4i> hierarchy;
@@ -101,27 +102,24 @@ void findObject(Mat frameThreshold, Mat &frame)
     {
         vector<Point> largestContour;
         largestContour = contours.at(contours.size() - 1);
-        /*
-        make a bounding rectangle around the largest contour, then
-        find its centroid this will be the object's final estimated position.
-        */
+
         Rect contourBoundingRectangle = boundingRect(largestContour);
 
-        object.x = contourBoundingRectangle.x +
-                   contourBoundingRectangle.width / 2;
+        objectPosition.x = contourBoundingRectangle.x +
+                           contourBoundingRectangle.width / 2;
 
-        object.y = contourBoundingRectangle.y +
-                   contourBoundingRectangle.height / 2;
+        objectPosition.y = contourBoundingRectangle.y +
+                           contourBoundingRectangle.height / 2;
     }
 }
 
-void drawObjectBoundingRectangle(Mat frame)
+void drawObjectBoundingRectangle(Mat frame, Point objectPosition)
 {
     int thickness = 3;
     Scalar color = Scalar(0, 255, 0);
 
     rectangle(frame,
-              Point(object.x - 40, object.y - 55),
-              Point(object.x + 40, object.y + 55),
+              Point(objectPosition.x - 40, objectPosition.y - 55),
+              Point(objectPosition.x + 40, objectPosition.y + 55),
               color, thickness);
 }
