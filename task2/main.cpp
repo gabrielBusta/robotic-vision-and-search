@@ -35,19 +35,19 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    const int frameCount = capture.get(CV_CAP_PROP_FRAME_COUNT);
+    const int MIN_THRESH = 50, MAX_VAL = 255;
+    const Size BLUR_SIZE = Size(10, 10);
+
+    Mat frame, nextFrame,
+        frameGray, nextFrameGray,
+        frameDifference,
+        frameThreshold;
+
     Point objectPosition = Point(0, 0);
-    int frameCount = capture.get(CV_CAP_PROP_FRAME_COUNT);
 
     while(capture.get(CV_CAP_PROP_POS_FRAMES) < frameCount - 1)
     {
-        const int MIN_THRESH = 50, MAX_VAL = 255;
-        const Size BLUR_SIZE = Size(10, 10);
-
-        Mat frame, nextFrame,
-            frameGray, nextFrameGray,
-            frameDifference,
-            frameThreshold;
-
         capture.read(frame);
 
         if (frame.empty())
