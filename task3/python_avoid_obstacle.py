@@ -18,7 +18,6 @@ else:
     print('Connection not successful')
     sys.exit('Could not connect')
 
-
 #retrieve motor  handles
 errorCode,left_motor_handle = vrep.simxGetObjectHandle(clientID,'Pioneer_p3dx_leftMotor',vrep.simx_opmode_oneshot_wait)
 errorCode,right_motor_handle = vrep.simxGetObjectHandle(clientID,'Pioneer_p3dx_rightMotor',vrep.simx_opmode_oneshot_wait)
