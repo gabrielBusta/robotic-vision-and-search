@@ -84,7 +84,12 @@ while (time.time()-t) < 600:
     highGreen = np.array([80, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv, lowGreen, highGreen)
 
-    # TODO: Clean up the mask and add path identification capability.
+    # Cleans up the mask
+    moments = cv2.moments(mask)
+    area = moments['m00']
+
+    ''' TODO: 1)Enable identification of the color green.
+              2) Follow the green path. '''
 
     errorCode = vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,vl, vrep.simx_opmode_streaming)
     errorCode = vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,vr, vrep.simx_opmode_streaming)
