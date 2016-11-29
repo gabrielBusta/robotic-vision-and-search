@@ -91,36 +91,6 @@ while (time.time()-t) < 600:
     highGreen = np.array([80, 255, 255], dtype = np.uint8)
     mask = cv2.inRange(hsv, lowGreen, highGreen)
 
-    # Cleans up the mask
-#     moments = cv2.moments(mask)
-#     area = moments['m00']
-#     if(area > 200):
-#         x = int(moments['m10']/moments['m00'])
-#         y = int(moments['m01']/moments['m00'])
-#         cv2.rectangle(img, (x, y), (x+2, y+2),(0,0,255), 2)
-#
-#         if abs(x-256/2) < 15:
-#             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,0,vrep.simx_opmode_streaming)
-#             vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,0,vrep.simx_opmode_streaming)
-#
-#         # Moves the motors in the appropriate directions
-#         elif x > 256/2:
-#             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,velocity,vrep.simx_opmode_streaming)
-#             vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,-velocity,vrep.simx_opmode_streaming)
-#         elif x < 256/2:
-#             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,-velocity,vrep.simx_opmode_streaming)
-#             vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,velocity,vrep.simx_opmode_streaming)
-#
-#     cv2.imshow('Image', img)
-#     cv2.imshow('Mask', mask)
-#
-    #w,h,bpp = np.shape(img)
-    #print("width",w)
-    #print("height",h)
-
-
-
-
     # -- Crop the image to view only the bottom border for tracking the path ( 10 pixels from the bottom - height)
     cropimg = mask[118:128]
     pmoments = cv2.moments(cropimg)
