@@ -21,6 +21,7 @@ else:
 
 steerR = 0
 steerL = 0
+# prevx = 0
 
 #retrieve motor  handles
 errorCode,left_motor_handle = vrep.simxGetObjectHandle(clientID,'Pioneer_p3dx_leftMotor',vrep.simx_opmode_oneshot_wait)
@@ -97,11 +98,11 @@ while (time.time()-t) < 600:
 #         x = int(moments['m10']/moments['m00'])
 #         y = int(moments['m01']/moments['m00'])
 #         cv2.rectangle(img, (x, y), (x+2, y+2),(0,0,255), 2)
-# 
+#
 #         if abs(x-256/2) < 15:
 #             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,0,vrep.simx_opmode_streaming)
 #             vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,0,vrep.simx_opmode_streaming)
-# 
+#
 #         # Moves the motors in the appropriate directions
 #         elif x > 256/2:
 #             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,velocity,vrep.simx_opmode_streaming)
@@ -109,26 +110,34 @@ while (time.time()-t) < 600:
 #         elif x < 256/2:
 #             vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,-velocity,vrep.simx_opmode_streaming)
 #             vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,velocity,vrep.simx_opmode_streaming)
-# 
+#
 #     cv2.imshow('Image', img)
 #     cv2.imshow('Mask', mask)
-#     
+#
     #w,h,bpp = np.shape(img)
     #print("width",w)
     #print("height",h)
-    
-    
 
-    
+
+
+
     # -- Crop the image to view only the bottom border for tracking the path ( 10 pixels from the bottom - height)
-    cropimg = mask[118:128] 
+    cropimg = mask[118:128]
     pmoments = cv2.moments(cropimg)
     area = pmoments['m00']
-    if(area > 0):
+
+    # if area == 0:
+        # if (prevx > 64):
+            #steerL += 1
+        #else:
+            #steerR += 1
+
+    if area > 0:
         x = int(pmoments['m10']/pmoments['m00'])
         y = int(pmoments['m01']/pmoments['m00'])
         cv2.rectangle(cropimg, (x, y), (x+2, y+2),(0,0,255), 2)
         print("x = ", x)
+        prevx = x
 
         if abs(x-64) < 5:
             steerR = 0
@@ -142,18 +151,18 @@ while (time.time()-t) < 600:
         elif x < 59:
             steerR += 1
             print("Turn left")
-            
+
         vl = vl + .15 * steerL
         vr = vr + .15 * steerR
         vrep.simxSetJointTargetVelocity(clientID, left_motor_handle,vl,vrep.simx_opmode_streaming)
         vrep.simxSetJointTargetVelocity(clientID, right_motor_handle,vr,vrep.simx_opmode_streaming)
-        
+
 
     cv2.imshow('Image', img)
     cv2.imshow('Mask', mask)
-    
+
     cv2.imshow('Cropped Image', cropimg)
-    
+
     key = cv2.waitKey(5) & 0xFF
     if key == 27:
         break
