@@ -3,7 +3,6 @@
 #include <queue>
 #include <string>
 #include <math.h>
-#include <ctime>
 
 using namespace std;
 
@@ -14,10 +13,6 @@ int closed_nodes_map[n][m]; // map of closed (tried-out) nodes
 int open_nodes_map[n][m]; // map of open (not-yet-tried) nodes
 int dir_map[n][m]; // map of directions
 const int dir = 8; // number of possible directions to go at any position
-				   // if dir==4
-				   //static int dx[dir]={1, 0, -1, 0};
-				   //static int dy[dir]={0, 1, 0, -1};
-				   // if dir==8
 int dx[dir] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 int dy[dir] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 
@@ -58,8 +53,6 @@ string pathFind(const int &, const int &, const int &, const int &);
 //--------------------------------------------
 int main()
 {
-	srand(time(NULL));
-
 	// create empty map
 	for (auto y = 0; y < m; y++)
 	{
@@ -85,12 +78,8 @@ int main()
 	cout << "Start: " << xA << "," << yA << endl;
 	cout << "Finish: " << xB << "," << yB << endl;
 	// get the route
-	clock_t start = clock();
 	string route = pathFind(xA, yA, xB, yB);
 	if (route == "") cout << "An empty route generated!" << endl;
-	clock_t end = clock();
-	double time_elapsed = double(end - start);
-	cout << "Time to calculate the route (ms): " << time_elapsed << endl;
 	cout << "Route:" << endl;
 	cout << route << endl << endl;
 
@@ -110,7 +99,6 @@ int main()
 			map[x][y] = 3;
 		}
 		map[x][y] = 4;
-
 
 		// display the map with the route
 		for (auto y = 0; y < m; y++)
@@ -202,8 +190,6 @@ string pathFind(const int & xStart, const int & yStart,
 		// mark it on the closed nodes map
 		closed_nodes_map[x][y] = 1;
 
-		// quit searching when the goal state is reached
-		//if((*n0).estimate(xFinish, yFinish) == 0)
 		if (x == xFinish && y == yFinish)
 		{
 			// generate the path from finish to start
