@@ -67,6 +67,8 @@ int main()
 	map[5][4] = 1;
 	map[6][3] = 1;
 	map[7][2] = 1;
+	map[3][4] = 1;
+	map[6][4] = 1;
 
 	// randomly select start and finish locations
 	auto xA = 0,
