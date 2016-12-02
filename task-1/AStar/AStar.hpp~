@@ -46,7 +46,6 @@ namespace AStar
         void addCollision(Vec2i coordinates_);
         void removeCollision(Vec2i coordinates_);
         void clearCollisions();
-        
     private:
         bool detectCollision(Vec2i coordinates_);
         Node* findNodeOnList(NodeSet& nodes_, Vec2i coordinates_);
