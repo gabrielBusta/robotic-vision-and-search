@@ -6,8 +6,8 @@ AStar::Viz::Viz(Vec2i worldSize_)
     worldSize = worldSize_;
     
     line = " +";
-    int numberOfUnderscores = worldSize.y * 2 - 1;
-    for (int i = 0; i < numberOfUnderscores; i++) {
+    int numberOfDashes = worldSize.y * 2 - 1;
+    for (int i = 0; i < numberOfDashes; i++) {
         line += "-";
     }
     line += "+\n";

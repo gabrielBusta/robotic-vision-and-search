@@ -42,7 +42,7 @@ int main()
     for (auto coordinate : path) {
         viz.setCell(coordinate, viz.robot);
         std::this_thread::sleep_for(std::chrono::nanoseconds(600000000));
-        std::system ("clear");
+        std::system("clear");
         viz.displayWorld();
     }
 }
