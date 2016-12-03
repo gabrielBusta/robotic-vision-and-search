@@ -42,3 +42,7 @@ Desktop.ini
 /object-tracking/obj/Debug/*
 
 .DS_Store
+
+*.pyc
+*~
+__pycache__
