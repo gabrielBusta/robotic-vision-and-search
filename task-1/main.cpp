@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
+#include <algorithm>
 #include "AStar/AStar.hpp"
 #include "Viz/Viz.hpp"
 
@@ -28,11 +31,18 @@ int main()
     }
 
     auto path = generator.findPath(start, goal);
+    std::reverse(begin(path), end(path));
     
-    for (auto& coordinate : path) {
-        std::cout << coordinate.x << " " << coordinate.y << "\n";
+    AStar::Viz viz(worldSize);
+    
+    for (auto coordinate : collisions) {
+        viz.setCell(coordinate, viz.collision);
     }
     
-    Viz viz(worldSize);
-    viz.displayWorld();
+    for (auto coordinate : path) {
+        viz.setCell(coordinate, viz.robot);
+        std::this_thread::sleep_for(std::chrono::nanoseconds(600000000));
+        std::system ("clear");
+        viz.displayWorld();
+    }
 }
